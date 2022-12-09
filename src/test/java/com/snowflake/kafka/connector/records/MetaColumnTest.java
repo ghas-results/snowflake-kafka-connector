@@ -32,6 +32,12 @@ public class MetaColumnTest {
           put(SnowflakeSinkConnectorConfig.SNOWFLAKE_METADATA_CREATETIME, "false");
         }
       };
+  private HashMap<String, String> latencyConfig =
+          new HashMap<String, String>() {
+            {
+              put(SnowflakeSinkConnectorConfig.SNOWFLAKE_METADATA_LATENCY, "false");
+            }
+          };
   private HashMap<String, String> topicConfig =
       new HashMap<String, String>() {
         {
@@ -113,6 +119,7 @@ public class MetaColumnTest {
     assert result.get(META).has(RecordService.OFFSET);
     assert result.get(META).has(RecordService.PARTITION);
     assert result.get(META).has(record.timestampType().name);
+    assert result.get(META).has(RecordService.KCLATENCY);
 
     // test metadata configuration -- remove offset and partition
     metadataConfig = new SnowflakeMetadataConfig(offsetAndPartitionConfig);
@@ -122,6 +129,7 @@ public class MetaColumnTest {
     assert !result.get(META).has(RecordService.OFFSET);
     assert !result.get(META).has(RecordService.PARTITION);
     assert result.get(META).has(record.timestampType().name);
+    assert result.get(META).has(RecordService.KCLATENCY);
     assert result.get(META).has(RecordService.TOPIC);
 
     // test metadata configuration -- remove time stamp
@@ -130,6 +138,19 @@ public class MetaColumnTest {
     result = mapper.readTree(service.getProcessedRecordForSnowpipe(record));
     assert result.has(META);
     assert !result.get(META).has(record.timestampType().name);
+    assert result.get(META).has(RecordService.KCLATENCY);
+    assert result.get(META).has(RecordService.TOPIC);
+    assert result.get(META).has(RecordService.OFFSET);
+    assert result.get(META).has(RecordService.PARTITION);
+
+    // test metadata configuration -- remove latency
+    metadataConfig = new SnowflakeMetadataConfig(latencyConfig);
+    service.setMetadataConfig(metadataConfig);
+    result = mapper.readTree(service.getProcessedRecordForSnowpipe(record));
+    assert result.has(META);
+    assert result.get(META).has(record.timestampType().name);
+    assert result.get(META).has(RecordService.KCLATENCY);
+    assert !result.get(META).has(RecordService.KCLATENCY);
     assert result.get(META).has(RecordService.TOPIC);
     assert result.get(META).has(RecordService.OFFSET);
     assert result.get(META).has(RecordService.PARTITION);

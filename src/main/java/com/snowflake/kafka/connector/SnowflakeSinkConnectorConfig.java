@@ -89,6 +89,7 @@ public class SnowflakeSinkConnectorConfig {
   // Snowflake Metadata Flags
   private static final String SNOWFLAKE_METADATA_FLAGS = "Snowflake Metadata Flags";
   public static final String SNOWFLAKE_METADATA_CREATETIME = "snowflake.metadata.createtime";
+  public static final String SNOWFLAKE_METADATA_LATENCY = "snowflake.metadata.latency";
   public static final String SNOWFLAKE_METADATA_TOPIC = "snowflake.metadata.topic";
   public static final String SNOWFLAKE_METADATA_OFFSET_AND_PARTITION =
       "snowflake.metadata.offset.and.partition";
@@ -390,6 +391,16 @@ public class SnowflakeSinkConnectorConfig {
             1,
             ConfigDef.Width.NONE,
             SNOWFLAKE_METADATA_CREATETIME)
+        .define(
+            SNOWFLAKE_METADATA_LATENCY,
+            Type.BOOLEAN,
+            SNOWFLAKE_METADATA_DEFAULT,
+            Importance.LOW,
+            "Flag to control whether record latency is collected in snowflake metadata",
+            SNOWFLAKE_METADATA_FLAGS,
+            1,
+            ConfigDef.Width.NONE,
+                SNOWFLAKE_METADATA_LATENCY)
         .define(
             SNOWFLAKE_METADATA_TOPIC,
             Type.BOOLEAN,

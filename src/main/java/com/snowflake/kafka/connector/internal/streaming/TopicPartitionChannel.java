@@ -619,6 +619,7 @@ public class TopicPartitionChannel {
       List<Long> offsets = recordsAndOffsets.getValue();
       InsertValidationResponse finalResponse = new InsertValidationResponse();
       boolean needToResetOffset = false;
+
       if (!enableSchemaEvolution) {
         finalResponse =
             this.channel.insertRows(

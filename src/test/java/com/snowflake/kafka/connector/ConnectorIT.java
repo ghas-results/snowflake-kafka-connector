@@ -27,6 +27,7 @@ public class ConnectorIT {
     SnowflakeSinkConnectorConfig.SNOWFLAKE_METADATA_TOPIC,
     SnowflakeSinkConnectorConfig.SNOWFLAKE_METADATA_OFFSET_AND_PARTITION,
     SnowflakeSinkConnectorConfig.SNOWFLAKE_METADATA_CREATETIME,
+    SnowflakeSinkConnectorConfig.SNOWFLAKE_METADATA_LATENCY,
     SnowflakeSinkConnectorConfig.TOPICS_TABLES_MAP,
     SnowflakeSinkConnectorConfig.SNOWFLAKE_PRIVATE_KEY,
     SnowflakeSinkConnectorConfig.JVM_PROXY_PORT,
@@ -81,6 +82,7 @@ public class ConnectorIT {
     config.put(SnowflakeSinkConnectorConfig.SNOWFLAKE_METADATA_TOPIC, "falseee");
     config.put(SnowflakeSinkConnectorConfig.SNOWFLAKE_METADATA_OFFSET_AND_PARTITION, "falseee");
     config.put(SnowflakeSinkConnectorConfig.SNOWFLAKE_METADATA_CREATETIME, "falseee");
+    config.put(SnowflakeSinkConnectorConfig.SNOWFLAKE_METADATA_LATENCY, "falseee");
     config.put(SnowflakeSinkConnectorConfig.TOPICS_TABLES_MAP, "jfsja,,");
     return config;
   }

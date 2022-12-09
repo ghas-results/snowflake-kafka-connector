@@ -67,8 +67,9 @@ public class RecordService extends EnableLogging {
   static final String CONTENT = "content";
   static final String META = "meta";
   static final String SCHEMA_ID = "schema_id";
-  private static final String KEY_SCHEMA_ID = "key_schema_id";
   static final String HEADERS = "headers";
+  static final String KCLATENCY = "kc_latency";
+  private static final String KEY_SCHEMA_ID = "key_schema_id";
 
   private boolean enableSchematization = false;
 
@@ -165,6 +166,13 @@ public class RecordService extends EnableLogging {
     if (record.timestampType() != TimestampType.NO_TIMESTAMP_TYPE
         && metadataConfig.createtimeFlag) {
       meta.put(record.timestampType().name, record.timestamp());
+    }
+
+    // ignore if no timestamp or latency
+    if (record.timestampType() != TimestampType.NO_TIMESTAMP_TYPE
+            && metadataConfig.kcLatencyFlag) {
+      // we put the create time here, and split/upsert the latency time when the data is ingested
+      meta.put(KCLATENCY, record.timestamp() - System.currentTimeMillis());
     }
 
     // include schema id if using avro with schema registry

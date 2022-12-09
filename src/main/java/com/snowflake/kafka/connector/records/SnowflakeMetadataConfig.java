@@ -6,6 +6,7 @@ import java.util.Map;
 
 public class SnowflakeMetadataConfig {
   final boolean createtimeFlag;
+  final boolean kcLatencyFlag;
   final boolean topicFlag;
   final boolean offsetAndPartitionFlag;
   final boolean allFlag;
@@ -24,6 +25,7 @@ public class SnowflakeMetadataConfig {
     // have those local variable to avoid assigning to final values multiple times
     // these values are the default values of the configuration
     boolean createtime = true;
+    boolean kclatency = true;
     boolean topic = true;
     boolean offsetAndPartition = true;
     boolean all = true;
@@ -32,6 +34,12 @@ public class SnowflakeMetadataConfig {
             .get(SnowflakeSinkConnectorConfig.SNOWFLAKE_METADATA_CREATETIME)
             .equals(SnowflakeSinkConnectorConfig.SNOWFLAKE_METADATA_DEFAULT)) {
       createtime = false;
+    }
+    if (config.containsKey(SnowflakeSinkConnectorConfig.SNOWFLAKE_METADATA_LATENCY)
+            && !config
+            .get(SnowflakeSinkConnectorConfig.SNOWFLAKE_METADATA_LATENCY)
+            .equals(SnowflakeSinkConnectorConfig.SNOWFLAKE_METADATA_DEFAULT)) {
+      kclatency = false;
     }
     if (config.containsKey(SnowflakeSinkConnectorConfig.SNOWFLAKE_METADATA_TOPIC)
         && !config
@@ -53,6 +61,7 @@ public class SnowflakeMetadataConfig {
     }
 
     createtimeFlag = createtime;
+    kcLatencyFlag = kclatency;
     topicFlag = topic;
     offsetAndPartitionFlag = offsetAndPartition;
     allFlag = all;
@@ -61,6 +70,9 @@ public class SnowflakeMetadataConfig {
   public String toString() {
     return "{createtimeFlag: "
         + createtimeFlag
+        + ", "
+        + "kcLatencyFlag: "
+        + kcLatencyFlag
         + ", "
         + "topicFlag: "
         + topicFlag
