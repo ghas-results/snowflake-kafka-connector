@@ -165,6 +165,7 @@ public class TestUtils {
     configuration.put(Utils.SF_URL, getProfile(profileFileName).get(HOST).asText());
     configuration.put(Utils.SF_WAREHOUSE, getProfile(profileFileName).get(WAREHOUSE).asText());
     configuration.put(Utils.SF_PRIVATE_KEY, getProfile(profileFileName).get(PRIVATE_KEY).asText());
+    // configuration.put(Utils.SF_ROLE, getProfile(profileFileName).get(ROLE).asText());
 
     configuration.put(Utils.NAME, TEST_CONNECTOR_NAME);
 
@@ -372,9 +373,28 @@ public class TestUtils {
     return false;
   }
 
+  /**
+   * Check Snowflake Error Code in test
+   *
+   * @param error Snowflake error
+   * @param func function throwing exception
+   * @return true is error code is correct, otherwise, false
+   */
+  public static boolean assertExceptionType(Class exceptionClass, Runnable func) {
+    try {
+      func.run();
+    } catch (Exception ex) {
+      return ex.getClass().equals(exceptionClass);
+    }
+    return false;
+  }
+
   /** @return snowflake connection for test */
   public static SnowflakeConnectionService getConnectionService() {
-    return SnowflakeConnectionServiceFactory.builder().setProperties(getConf()).build();
+    return SnowflakeConnectionServiceFactory.builder()
+        .setProperties(getConf())
+        .setTaskID("0")
+        .build();
   }
 
   /**
@@ -524,6 +544,15 @@ public class TestUtils {
       final int partitionNo) {
     ArrayList<SinkRecord> records = new ArrayList<>();
 
+    for (long i = startOffset; i < startOffset + noOfRecords; ++i) {
+      records.add(createNativeJsonSinkRecord(i, topicName, partitionNo));
+    }
+
+    return records;
+  }
+
+  public static SinkRecord createNativeJsonSinkRecord(
+      final long offset, final String topicName, final int partitionNo) {
     JsonConverter converter = new JsonConverter();
     HashMap<String, String> converterConfig = new HashMap<>();
     converterConfig.put("schemas.enable", "true");
@@ -532,18 +561,14 @@ public class TestUtils {
         converter.toConnectData(
             "test", TestUtils.JSON_WITH_SCHEMA.getBytes(StandardCharsets.UTF_8));
 
-    for (long i = startOffset; i < startOffset + noOfRecords; ++i) {
-      records.add(
-          new SinkRecord(
-              topicName,
-              partitionNo,
-              Schema.STRING_SCHEMA,
-              "test",
-              schemaInputValue.schema(),
-              schemaInputValue.value(),
-              i));
-    }
-    return records;
+    return new SinkRecord(
+        topicName,
+        partitionNo,
+        Schema.STRING_SCHEMA,
+        "test",
+        schemaInputValue.schema(),
+        schemaInputValue.value(),
+        offset);
   }
 
   /* Generate (noOfRecords - startOffset) for a given topic and partition which were essentially avro records */
