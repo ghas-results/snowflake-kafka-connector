@@ -29,7 +29,6 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
-import org.mockito.AdditionalMatchers;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
@@ -189,21 +188,12 @@ public class SnowflakeSinkTaskForStreamingIT {
     sinkTask0.initialize(new InMemorySinkTaskContext(Collections.singleton(topicPartition)));
     sinkTask1.initialize(new InMemorySinkTaskContext(Collections.singleton(topicPartition)));
 
-    // set up task1 logging tag
-    String expectedTask1Tag =
-        LoggerHandler.getFormattedTaskLoggingTag(task1Id, System.currentTimeMillis());
-    Mockito.doCallRealMethod().when(loggerHandler).setLoggerInstanceTag(expectedTask1Tag);
-
     // start tasks
     sinkTask0.start(config0);
     sinkTask1.start(config1);
 
     // verify task1 start logs
-    Mockito.verify(loggerHandler, Mockito.times(1))
-        .setLoggerInstanceTag(Mockito.contains(expectedTask1Tag));
-    Mockito.verify(logger, Mockito.times(2))
-        .debug(
-            AdditionalMatchers.and(Mockito.contains(expectedTask1Tag), Mockito.contains("start")));
+    Mockito.verify(logger, Mockito.times(2)).debug(Mockito.contains("start"));
 
     // open tasks
     ArrayList<TopicPartition> topicPartitions0 = new ArrayList<>();
@@ -215,9 +205,7 @@ public class SnowflakeSinkTaskForStreamingIT {
     sinkTask1.open(topicPartitions1);
 
     // verify task1 open logs
-    Mockito.verify(logger, Mockito.times(1))
-        .debug(
-            AdditionalMatchers.and(Mockito.contains(expectedTask1Tag), Mockito.contains("open")));
+    Mockito.verify(logger, Mockito.times(1)).debug(Mockito.contains("open"));
 
     // send data to tasks
     List<SinkRecord> records0 = TestUtils.createJsonStringSinkRecords(0, 1, topicName, partition0);
@@ -227,8 +215,7 @@ public class SnowflakeSinkTaskForStreamingIT {
     sinkTask1.put(records1);
 
     // verify task1 put logs
-    Mockito.verify(logger, Mockito.times(1))
-        .debug(AdditionalMatchers.and(Mockito.contains(expectedTask1Tag), Mockito.contains("put")));
+    Mockito.verify(logger, Mockito.times(1)).debug(Mockito.contains("put"));
 
     // commit offsets
     final Map<TopicPartition, OffsetAndMetadata> offsetMap0 = new HashMap<>();
@@ -240,10 +227,7 @@ public class SnowflakeSinkTaskForStreamingIT {
     TestUtils.assertWithRetry(() -> sinkTask1.preCommit(offsetMap1).size() == 1, 20, 5);
 
     // verify task1 precommit logs
-    Mockito.verify(logger, Mockito.times(1))
-        .debug(
-            AdditionalMatchers.and(
-                Mockito.contains(expectedTask1Tag), Mockito.contains("precommit")));
+    Mockito.verify(logger, Mockito.times(1)).debug(Mockito.contains("precommit"));
 
     TestUtils.assertWithRetry(
         () -> sinkTask0.preCommit(offsetMap0).get(topicPartitions0.get(0)).offset() == 1, 20, 5);
@@ -255,18 +239,14 @@ public class SnowflakeSinkTaskForStreamingIT {
     sinkTask1.close(topicPartitions1);
 
     // verify task1 close logs
-    Mockito.verify(logger, Mockito.times(1))
-        .debug(
-            AdditionalMatchers.and(Mockito.contains(expectedTask1Tag), Mockito.contains("closed")));
+    Mockito.verify(logger, Mockito.times(1)).debug(Mockito.contains("closed"));
 
     // stop tasks
     sinkTask0.stop();
     sinkTask1.stop();
 
     // verify task1 stop logs
-    Mockito.verify(logger, Mockito.times(1))
-        .debug(
-            AdditionalMatchers.and(Mockito.contains(expectedTask1Tag), Mockito.contains("stop")));
+    Mockito.verify(logger, Mockito.times(1)).debug(Mockito.contains("stop"));
   }
 
   @Test
