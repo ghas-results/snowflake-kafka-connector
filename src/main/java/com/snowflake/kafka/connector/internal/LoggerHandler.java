@@ -1,7 +1,6 @@
 package com.snowflake.kafka.connector.internal;
 
 import com.snowflake.kafka.connector.Utils;
-import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -9,23 +8,14 @@ import org.slf4j.LoggerFactory;
 public class LoggerHandler {
   // static properties and methods
   private static final Logger META_LOGGER = LoggerFactory.getLogger(LoggerHandler.class.getName());
-  private static final String EMPTY_ID = new UUID(0L, 0L).toString();
 
-  private static String kcGlobalInstanceId = EMPTY_ID;
+  // [KC:instanceid] where instanceid is a hash of a random uuid and the current time
+  private static final String KC_GLOBAL_INSTANCEID_FORMAT = "[KC:{}]";
+  // [TASK:taskId.creationtimestamp]
+  // Example: [TASK:0.1678386676] indicates task 0 was started at 1678386676
+  private static final String TASK_INSTANCE_TAG_FORMAT = "[TASK:{}.{}]";
 
-  /**
-   * Sets the KC global instance id for all loggers.
-   *
-   * <p>This should only be called in start so that the entire kafka connector instance has the same
-   * tag for logging
-   *
-   * <p>If an invalid id is given, continue to log without the id
-   *
-   * @param id UUID attached for every log
-   */
-  public static void setConnectGlobalInstanceId(UUID id) {
-    setConnectGlobalInstanceId(id.toString());
-  }
+  private static String kcGlobalInstanceId = "";
 
   /**
    * Sets the KC global instance id for all loggers.
@@ -37,17 +27,39 @@ public class LoggerHandler {
    *
    * @param id String attached to every log
    */
-  public static void setConnectGlobalInstanceId(String id) {
-    if (id != null && !id.isEmpty() && !id.equals(EMPTY_ID)) {
+  public static void setKcGlobalInstanceId(String id) {
+    if (id != null && !id.isEmpty()) {
       kcGlobalInstanceId = id;
       META_LOGGER.info(
           "Set Kafka Connect global instance id tag for logging: '{}'", kcGlobalInstanceId);
     } else {
-      META_LOGGER.info(
+      META_LOGGER.warn(
           "Given Kafka Connect global instance id was invalid (null or empty), continuing to log"
               + " without it");
-      kcGlobalInstanceId = EMPTY_ID;
+      kcGlobalInstanceId = "";
     }
+  }
+
+  /**
+   * Returns the instance id as the hashcode of the kc start time
+   *
+   * @param startTime the start time
+   * @return the formatted instance id
+   */
+  public static String getFormattedKcGlobalInstanceId(long startTime) {
+    return Utils.formatString(KC_GLOBAL_INSTANCEID_FORMAT, Math.abs(("" + startTime).hashCode()));
+  }
+
+  /**
+   * Returns a formatted task logging tag as the taskid with a hash of the task start time
+   *
+   * @param taskId the task id
+   * @param startTime the task start time
+   * @return the formatted task logging tag
+   */
+  public static String getFormattedTaskLoggingTag(String taskId, long startTime) {
+    return Utils.formatString(
+        TASK_INSTANCE_TAG_FORMAT, taskId, Math.abs(("" + startTime).hashCode()));
   }
 
   private Logger logger;
@@ -61,8 +73,8 @@ public class LoggerHandler {
   public LoggerHandler(String name) {
     this.logger = LoggerFactory.getLogger(name);
 
-    META_LOGGER.info(
-        kcGlobalInstanceId.equals(EMPTY_ID)
+    META_LOGGER.trace(
+        kcGlobalInstanceId.isEmpty()
             ? Utils.formatLogMessage(
                 "Created loggerHandler for class: '{}' without a Kafka Connect global instance id.",
                 name)
@@ -88,7 +100,7 @@ public class LoggerHandler {
     }
 
     this.loggerInstanceTag = loggerTag;
-    this.logger.info("Given logger tag set to: '{}'", this.loggerInstanceTag);
+    this.logger.debug("Given logger tag set to: '{}'", this.loggerInstanceTag);
   }
 
   /** Clears the loggerHandler's instance id tag */
@@ -166,14 +178,13 @@ public class LoggerHandler {
   private String getFormattedMsg(String msg, Object... vars) {
     String tag = "";
 
-    if (!kcGlobalInstanceId.equals(EMPTY_ID)) {
-      if (!this.loggerInstanceTag.isEmpty()) {
-        tag = Utils.formatString("[KC:{}|{}] ", kcGlobalInstanceId, this.loggerInstanceTag);
-      } else {
-        tag = Utils.formatString("[KC:{}] ", kcGlobalInstanceId);
-      }
-    } else if (!this.loggerInstanceTag.isEmpty()) {
-      tag = Utils.formatString("[{}] ", this.loggerInstanceTag);
+    // instance id and tag should be empty if uninitialized
+    if (!kcGlobalInstanceId.equals("")) {
+      tag += kcGlobalInstanceId + " ";
+    }
+
+    if (!this.loggerInstanceTag.equals("")) {
+      tag += this.loggerInstanceTag + " ";
     }
 
     return Utils.formatLogMessage(tag + msg, vars);
